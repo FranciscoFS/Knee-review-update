@@ -101,8 +101,8 @@ def analyze_with_gemini(papers):
             p['category'] = categorize_paper_fallback(p['title'])
         return papers
 
-    print(f"Analyzing {len(papers)} papers with Gemini...")
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={GEMINI_API_KEY}"
+    print(f"Analyzing {len(papers)} papers with AI...")
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemma-4-31b-it:generateContent?key={GEMINI_API_KEY}"
     
     # Batch processing to stay well under rate limits
     batch_size = 5
