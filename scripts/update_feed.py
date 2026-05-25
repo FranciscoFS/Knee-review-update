@@ -182,12 +182,20 @@ def analyze_with_gemini(papers):
 
 
 def main():
-    end_date = datetime.now()
-    start_date = end_date - timedelta(days=7)
-    
-    start_str = start_date.strftime("%Y/%m/%d")
-    end_str = end_date.strftime("%Y/%m/%d")
-    
+    end_date_env = os.environ.get("END_DATE", "").strip()
+    start_date_env = os.environ.get("START_DATE", "").strip()
+
+    if start_date_env and end_date_env:
+        start_str = start_date_env
+        end_str = end_date_env
+        print(f"Using custom date range from environment: {start_str} to {end_str}")
+    else:
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=7)
+        start_str = start_date.strftime("%Y/%m/%d")
+        end_str = end_date.strftime("%Y/%m/%d")
+        print(f"Using default 7-day date range: {start_str} to {end_str}")
+        
     print(f"Fetching IDs from {start_str} to {end_str}...")
     ids = fetch_pubmed_ids(start_str, end_str)
     print(f"Found {len(ids)} papers.")

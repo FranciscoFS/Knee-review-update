@@ -4,6 +4,15 @@ on:
   schedule:
     - cron: '0 0 * * 0' # Runs at midnight every Sunday
   workflow_dispatch: # Allows manual trigger from GitHub UI
+    inputs:
+      start_date:
+        description: 'Start Date (YYYY/MM/DD). Leave blank for default 7 days.'
+        required: false
+        type: string
+      end_date:
+        description: 'End Date (YYYY/MM/DD). Leave blank for default 7 days.'
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -24,6 +33,8 @@ jobs:
         env:
           FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          START_DATE: ${{ github.event.inputs.start_date }}
+          END_DATE: ${{ github.event.inputs.end_date }}
         run: python scripts/update_feed.py
         
       - name: Commit and push changes
