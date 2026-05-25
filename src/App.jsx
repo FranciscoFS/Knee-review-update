@@ -28,7 +28,8 @@ function App() {
     setError(null);
     setIsAiFeed(true);
     try {
-      const res = await fetch('/data/weekly_feed.json');
+      const feedPath = `${import.meta.env.BASE_URL}data/weekly_feed.json`;
+      const res = await fetch(feedPath);
       if (!res.ok) throw new Error("Feed not generated yet");
       const data = await res.json();
       setPapers(data);
