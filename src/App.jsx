@@ -1,0 +1,292 @@
+import { useState, useEffect } from 'react';
+import { fetchRecentPapers, fetchAbstract } from './api/pubmed';
+import { categorizePaper } from './utils/categorize';
+import { subDays, format } from 'date-fns';
+import { Search, ExternalLink, Calendar as CalendarIcon, RefreshCw, X, Sparkles, BookOpen, Activity } from 'lucide-react';
+
+function App() {
+  const [papers, setPapers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isAiFeed, setIsAiFeed] = useState(true);
+  
+  // Modal states
+  const [selectedPaper, setSelectedPaper] = useState(null);
+  const [abstractText, setAbstractText] = useState('');
+  const [loadingAbstract, setLoadingAbstract] = useState(false);
+
+  // Date states
+  const [startDate, setStartDate] = useState(format(subDays(new Date(), 7), 'yyyy-MM-dd'));
+  const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  
+  // Category filter
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [sortBy, setSortBy] = useState('relevance');
+
+  const loadAiFeed = async () => {
+    setLoading(true);
+    setError(null);
+    setIsAiFeed(true);
+    try {
+      const res = await fetch('/data/weekly_feed.json');
+      if (!res.ok) throw new Error("Feed not generated yet");
+      const data = await res.json();
+      setPapers(data);
+    } catch (err) {
+      console.log("No AI feed found, falling back to live fetch", err);
+      // Fallback if the json doesn't exist yet (e.g. before first GitHub action run)
+      loadLivePapers();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadLivePapers = async () => {
+    setLoading(true);
+    setError(null);
+    setIsAiFeed(false);
+    try {
+      const results = await fetchRecentPapers(new Date(startDate), new Date(endDate));
+      
+      const categorized = results.map(p => ({
+        ...p,
+        category: categorizePaper(p.title)
+      }));
+      
+      setPapers(categorized);
+    } catch (err) {
+      setError("Failed to fetch papers. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // On first load, load the static AI feed
+    loadAiFeed();
+  }, []);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    loadLivePapers();
+  };
+
+  const openModal = async (paper) => {
+    setSelectedPaper(paper);
+    setAbstractText(paper.abstract || ''); 
+    
+    // If abstract is missing (e.g. from live fetch), fetch it
+    if (!paper.abstract) {
+      setLoadingAbstract(true);
+      const text = await fetchAbstract(paper.id);
+      setAbstractText(text);
+      setLoadingAbstract(false);
+    }
+  };
+
+  const closeModal = () => {
+    setSelectedPaper(null);
+    setAbstractText('');
+  };
+
+  const filteredPapers = selectedCategory === 'all' 
+    ? papers 
+    : papers.filter(p => p.category.id === selectedCategory);
+
+  const sortedPapers = [...filteredPapers].sort((a, b) => {
+    if (sortBy === 'relevance') {
+      const relA = a.ai_relevance || 0;
+      const relB = b.ai_relevance || 0;
+      return relB - relA;
+    } else {
+      return new Date(b.date) - new Date(a.date);
+    }
+  });
+
+  return (
+    <div className="app-container">
+      <header className="header">
+        <h1>Knee Surgery Literature</h1>
+        <p>Your weekly updated feed of top orthopaedic journals.</p>
+        {isAiFeed && (
+          <div className="ai-badge">
+            <Sparkles size={16} /> AI-Powered Feed
+          </div>
+        )}
+      </header>
+
+      <form className="filters-card" onSubmit={handleSearch}>
+        <div className="filter-group">
+          <label htmlFor="startDate">Start Date</label>
+          <input 
+            type="date" 
+            id="startDate" 
+            value={startDate} 
+            onChange={e => setStartDate(e.target.value)} 
+            required 
+          />
+        </div>
+        <div className="filter-group">
+          <label htmlFor="endDate">End Date</label>
+          <input 
+            type="date" 
+            id="endDate" 
+            value={endDate} 
+            onChange={e => setEndDate(e.target.value)} 
+            required 
+          />
+        </div>
+        <div className="filter-group">
+          <label htmlFor="category">Category</label>
+          <select 
+            id="category" 
+            value={selectedCategory} 
+            onChange={e => setSelectedCategory(e.target.value)}
+          >
+            <option value="all">All Topics</option>
+            <option value="acl">ACL</option>
+            <option value="meniscus">Meniscus</option>
+            <option value="arthroplasty">Arthroplasty / TKA</option>
+            <option value="cartilage">Cartilage</option>
+            <option value="patellofemoral">Patellofemoral</option>
+            <option value="other">General Knee</option>
+          </select>
+        </div>
+        <div className="filter-group">
+          <label htmlFor="sortBy">Sort By</label>
+          <select 
+            id="sortBy" 
+            value={sortBy} 
+            onChange={e => setSortBy(e.target.value)}
+          >
+            <option value="relevance">Relevance (AI)</option>
+            <option value="date">Date (Newest)</option>
+          </select>
+        </div>
+        <button type="submit" className="btn" disabled={loading}>
+          {loading ? <RefreshCw className="spinner" size={20} /> : <Search size={20} />}
+          {loading ? 'Searching...' : 'Search'}
+        </button>
+        {!isAiFeed && (
+          <button type="button" className="btn btn-secondary" onClick={loadAiFeed} disabled={loading}>
+            <Sparkles size={20} /> Return to AI Feed
+          </button>
+        )}
+      </form>
+
+      {loading && (
+        <div className="loading-state">
+          <RefreshCw className="spinner" size={40} />
+          <h2>Fetching research...</h2>
+        </div>
+      )}
+
+      {error && (
+        <div className="empty-state">
+          <h2>Oops!</h2>
+          <p>{error}</p>
+        </div>
+      )}
+
+      {!loading && !error && sortedPapers.length === 0 && (
+        <div className="empty-state">
+          <CalendarIcon size={48} opacity={0.3} />
+          <h2>No papers found</h2>
+          <p>Try adjusting your date range or category filter.</p>
+        </div>
+      )}
+
+      {!loading && !error && sortedPapers.length > 0 && (
+        <div className="papers-grid">
+          {sortedPapers.map(paper => (
+            <div 
+              className="paper-card clickable" 
+              key={paper.id} 
+              onClick={() => openModal(paper)}
+            >
+              <div className="paper-journal">{paper.journal}</div>
+              <h3 className="paper-title">{paper.title}</h3>
+              <div className="paper-authors">{paper.authors}</div>
+              
+              {paper.ai_summary && (
+                <div className="paper-ai-preview">
+                  <strong>Takeaway:</strong> {paper.ai_summary}
+                </div>
+              )}
+              
+              <div className="paper-footer">
+                <div className="paper-date">
+                  <CalendarIcon size={14} />
+                  {paper.date}
+                </div>
+                <span className={`paper-category ${paper.category.id}`}>
+                  {paper.category.label}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Modal Overlay */}
+      {selectedPaper && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={closeModal}>
+              <X size={24} />
+            </button>
+            <div className="paper-journal">{selectedPaper.journal}</div>
+            <h2 className="modal-title">{selectedPaper.title}</h2>
+            <div className="paper-authors mb-4">{selectedPaper.authors}</div>
+            
+            <div className="modal-body">
+              {selectedPaper.ai_summary && (
+                <div className="modal-ai-box">
+                  <div className="ai-box-header">
+                    <Sparkles size={18} />
+                    AI Analysis
+                  </div>
+                  <div className="ai-box-grid">
+                    <div className="ai-stat">
+                      <BookOpen size={16} />
+                      <span><strong>Study Type:</strong> {selectedPaper.ai_study_type}</span>
+                    </div>
+                    <div className="ai-stat">
+                      <Activity size={16} />
+                      <span><strong>Relevance Score:</strong> {selectedPaper.ai_relevance}/10</span>
+                    </div>
+                  </div>
+                  <p className="ai-summary"><strong>Clinical Takeaway:</strong> {selectedPaper.ai_summary}</p>
+                </div>
+              )}
+              
+              <h3>Abstract</h3>
+              {loadingAbstract ? (
+                <div className="loading-state" style={{ padding: '2rem 0' }}>
+                  <RefreshCw className="spinner" size={24} />
+                  <p>Loading abstract...</p>
+                </div>
+              ) : (
+                <p className="abstract-text">{abstractText || "Abstract not available."}</p>
+              )}
+            </div>
+
+            <div className="modal-footer">
+              <a 
+                href={selectedPaper.link} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="btn"
+              >
+                <ExternalLink size={18} />
+                View on PubMed
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default App;
