@@ -23,12 +23,23 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('relevance');
 
+  // Local AI execution state
+  const [isLocalhost, setIsLocalhost] = useState(false);
+  const [runningLocalScript, setRunningLocalScript] = useState(false);
+
+  useEffect(() => {
+    // Check if running on localhost to show the dev button
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      setIsLocalhost(true);
+    }
+  }, []);
+
   const loadAiFeed = async () => {
     setLoading(true);
     setError(null);
     setIsAiFeed(true);
     try {
-      const feedPath = `${import.meta.env.BASE_URL}data/weekly_feed.json`;
+      const feedPath = `${import.meta.env.BASE_URL}data/weekly_feed.json?t=${new Date().getTime()}`;
       const res = await fetch(feedPath);
       if (!res.ok) throw new Error("Feed not generated yet");
       const data = await res.json();
@@ -66,6 +77,25 @@ function App() {
     // On first load, load the static AI feed
     loadAiFeed();
   }, []);
+
+  const handleRunLocalScript = async () => {
+    setRunningLocalScript(true);
+    try {
+      // Add a cache buster query parameter to avoid caching when we reload
+      const res = await fetch('/api/run-script', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        alert("Script executed successfully! Reloading feed...");
+        await loadAiFeed(); // Reload the feed to show new data
+      } else {
+        alert(`Failed to run script: ${data.error}`);
+      }
+    } catch (err) {
+      alert("Error contacting local server. Make sure you are running 'npm run dev'.");
+    } finally {
+      setRunningLocalScript(false);
+    }
+  };
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -112,6 +142,19 @@ function App() {
         {isAiFeed && (
           <div className="ai-badge">
             <Sparkles size={16} /> AI-Powered Feed
+          </div>
+        )}
+        {isLocalhost && isAiFeed && (
+          <div style={{ marginTop: '1rem' }}>
+            <button 
+              className="btn" 
+              style={{ background: '#8b5cf6', margin: '0 auto' }} 
+              onClick={handleRunLocalScript} 
+              disabled={runningLocalScript}
+            >
+              {runningLocalScript ? <RefreshCw className="spinner" size={18} /> : <Activity size={18} />}
+              {runningLocalScript ? 'Running Python Script...' : 'Force Local AI Update'}
+            </button>
           </div>
         )}
       </header>
