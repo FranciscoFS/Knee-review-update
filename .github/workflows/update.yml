@@ -34,6 +34,8 @@ jobs:
       - name: Run AI update script
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          EMAIL_USERNAME: ${{ secrets.EMAIL_USERNAME }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           START_DATE: ${{ github.event.inputs.start_date }}
           END_DATE: ${{ github.event.inputs.end_date }}
         run: python scripts/update_feed.py

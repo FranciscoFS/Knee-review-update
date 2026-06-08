@@ -5,6 +5,9 @@ import urllib.parse
 from datetime import datetime, timedelta
 import time
 import re
+import smtplib
+import ssl
+from email.message import EmailMessage
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "").strip().strip('"').strip("'")
 PUBMED_BASE = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils'
@@ -180,6 +183,64 @@ def analyze_with_gemini(papers):
 
     return papers
 
+def send_email_summary(papers, end_str):
+    email_user = os.environ.get("EMAIL_USERNAME", "").strip()
+    email_pass = os.environ.get("EMAIL_PASSWORD", "").strip()
+    
+    if not email_user or not email_pass:
+        print("No email credentials found, skipping email notification.")
+        return
+        
+    print("Email credentials found. Generating email summary...")
+    
+    # Get top 5 papers
+    top_papers = papers[:5]
+    
+    html_content = f"""
+    <html>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #4f46e5; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">Knee Surgery AI Review</h2>
+        <p>Your weekly feed update for the week of <strong>{end_str}</strong> is ready!</p>
+        <p>Here are the top {len(top_papers)} most relevant papers of the week:</p>
+    """
+    
+    for p in top_papers:
+        relevance = p.get('ai_relevance', 5)
+        category = p.get('category', {}).get('label', 'General Knee')
+        html_content += f"""
+        <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+            <h3 style="margin-top: 0; color: #111827;">{p['title']}</h3>
+            <p style="font-size: 0.9em; color: #6b7280; margin-top: -10px;">{p['journal']} | <span style="color: #4f46e5; font-weight: bold;">{category}</span> | Relevance: <strong>{relevance}/10</strong></p>
+            <p><strong>Clinical Takeaway:</strong> {p.get('ai_summary', '')}</p>
+            <a href="{p['link']}" style="color: #4f46e5; text-decoration: none; font-weight: bold;">Read on PubMed &rarr;</a>
+        </div>
+        """
+        
+    html_content += f"""
+        <div style="margin-top: 30px; text-align: center;">
+            <a href="https://franciscofs.github.io/Knee-review-update/" style="background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">View Full Feed Online</a>
+        </div>
+      </body>
+    </html>
+    """
+    
+    msg = EmailMessage()
+    msg['Subject'] = f"Knee Surgery AI Review - {end_str}"
+    msg['From'] = email_user
+    msg['To'] = email_user # Sending to self
+    msg.set_content(f"Your weekly update is ready! Go to https://franciscofs.github.io/Knee-review-update/")
+    msg.add_alternative(html_content, subtype='html')
+    
+    try:
+        context = ssl.create_default_context()
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
+            server.login(email_user, email_pass)
+            server.send_message(msg)
+        print("Email sent successfully!")
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+
+
 
 def main():
     end_date_env = os.environ.get("END_DATE", "").strip()
@@ -255,6 +316,9 @@ def main():
         json.dump(feed_history, f, indent=2)
         
     print(f"Successfully saved {len(papers)} papers to {history_filename} and updated history.")
+    
+    # Try sending email
+    send_email_summary(papers, end_str)
 
 if __name__ == "__main__":
     main()
