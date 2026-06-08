@@ -10,6 +10,10 @@ function App() {
   const [error, setError] = useState(null);
   const [isAiFeed, setIsAiFeed] = useState(true);
   
+  // History state
+  const [feedHistory, setFeedHistory] = useState([]);
+  const [selectedFeedFile, setSelectedFeedFile] = useState('weekly_feed.json');
+  
   // Modal states
   const [selectedPaper, setSelectedPaper] = useState(null);
   const [abstractText, setAbstractText] = useState('');
@@ -34,12 +38,12 @@ function App() {
     }
   }, []);
 
-  const loadAiFeed = async () => {
+  const loadAiFeed = async (filename = 'weekly_feed.json') => {
     setLoading(true);
     setError(null);
     setIsAiFeed(true);
     try {
-      const feedPath = `${import.meta.env.BASE_URL}data/weekly_feed.json?t=${new Date().getTime()}`;
+      const feedPath = `${import.meta.env.BASE_URL}data/${filename}?t=${new Date().getTime()}`;
       const res = await fetch(feedPath);
       if (!res.ok) throw new Error("Feed not generated yet");
       const data = await res.json();
@@ -73,10 +77,32 @@ function App() {
     }
   };
 
+  const loadHistoryIndex = async () => {
+    try {
+      const res = await fetch(`${import.meta.env.BASE_URL}data/feed_history.json?t=${new Date().getTime()}`);
+      if (res.ok) {
+        const historyData = await res.json();
+        setFeedHistory(historyData);
+        if (historyData.length > 0) {
+          // Set the most recent as selected
+          setSelectedFeedFile(historyData[0].file);
+        }
+      }
+    } catch (err) {
+      console.log("No feed history found yet.");
+    }
+  };
+
   useEffect(() => {
-    // On first load, load the static AI feed
-    loadAiFeed();
+    // On first load, load the static AI feed and history index
+    loadHistoryIndex().then(() => loadAiFeed());
   }, []);
+
+  const handleFeedChange = (e) => {
+    const file = e.target.value;
+    setSelectedFeedFile(file);
+    loadAiFeed(file);
+  };
 
   const handleRunLocalScript = async () => {
     setRunningLocalScript(true);
@@ -140,8 +166,22 @@ function App() {
         <h1>Knee Surgery Literature</h1>
         <p>Your weekly updated feed of top orthopaedic journals.</p>
         {isAiFeed && (
-          <div className="ai-badge">
-            <Sparkles size={16} /> AI-Powered Feed
+          <div className="ai-badge-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+            <div className="ai-badge">
+              <Sparkles size={16} /> AI-Powered Feed
+            </div>
+            {feedHistory.length > 0 && (
+              <select 
+                value={selectedFeedFile}
+                onChange={handleFeedChange}
+                className="feed-history-select"
+                style={{ padding: '0.4rem 0.8rem', borderRadius: '0.5rem', border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.9rem', cursor: 'pointer', outline: 'none' }}
+              >
+                {feedHistory.map(entry => (
+                  <option key={entry.file} value={entry.file}>{entry.label}</option>
+                ))}
+              </select>
+            )}
           </div>
         )}
         {isLocalhost && isAiFeed && (
@@ -212,7 +252,16 @@ function App() {
           {loading ? 'Searching...' : 'Search'}
         </button>
         {!isAiFeed && (
-          <button type="button" className="btn btn-secondary" onClick={loadAiFeed} disabled={loading}>
+          <button 
+            type="button" 
+            className="btn btn-secondary" 
+            onClick={() => {
+              const defaultFile = feedHistory.length > 0 ? feedHistory[0].file : 'weekly_feed.json';
+              setSelectedFeedFile(defaultFile);
+              loadAiFeed(defaultFile);
+            }} 
+            disabled={loading}
+          >
             <Sparkles size={20} /> Return to AI Feed
           </button>
         )}

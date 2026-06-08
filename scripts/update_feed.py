@@ -206,15 +206,55 @@ def main():
     # Sort by relevance score descending
     papers.sort(key=lambda x: x.get('ai_relevance', 0), reverse=True)
     
-    # Save to public/data/weekly_feed.json
+    # Save to public/data/weekly_feed.json and feed_YYYY-MM-DD.json
     output_dir = os.path.join(os.path.dirname(__file__), '..', 'public', 'data')
     os.makedirs(output_dir, exist_ok=True)
     
-    output_path = os.path.join(output_dir, 'weekly_feed.json')
-    with open(output_path, 'w', encoding='utf-8') as f:
+    # Generate historical filename
+    date_formatted = end_str.replace('/', '-')
+    history_filename = f"feed_{date_formatted}.json"
+    history_path = os.path.join(output_dir, history_filename)
+    
+    with open(history_path, 'w', encoding='utf-8') as f:
         json.dump(papers, f, indent=2)
         
-    print(f"Successfully saved {len(papers)} papers to {output_path}")
+    # Also overwrite the default one for backward compatibility
+    default_path = os.path.join(output_dir, 'weekly_feed.json')
+    with open(default_path, 'w', encoding='utf-8') as f:
+        json.dump(papers, f, indent=2)
+        
+    # Update feed_history.json
+    history_index_path = os.path.join(output_dir, 'feed_history.json')
+    feed_history = []
+    if os.path.exists(history_index_path):
+        try:
+            with open(history_index_path, 'r', encoding='utf-8') as f:
+                feed_history = json.load(f)
+        except Exception:
+            pass
+            
+    # Check if this date already exists to update it, or prepend it
+    date_obj = datetime.strptime(end_str, "%Y/%m/%d")
+    label = f"Week of {date_obj.strftime('%b %d, %Y')}"
+    
+    new_entry = {
+        "date": date_formatted,
+        "file": history_filename,
+        "label": label
+    }
+    
+    # Remove existing entry for the same date if it exists
+    feed_history = [entry for entry in feed_history if entry.get("date") != date_formatted]
+    # Add new entry at the top
+    feed_history.insert(0, new_entry)
+    
+    # Sort history descending by date just to be safe
+    feed_history.sort(key=lambda x: x.get("date", ""), reverse=True)
+    
+    with open(history_index_path, 'w', encoding='utf-8') as f:
+        json.dump(feed_history, f, indent=2)
+        
+    print(f"Successfully saved {len(papers)} papers to {history_filename} and updated history.")
 
 if __name__ == "__main__":
     main()
