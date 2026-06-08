@@ -102,7 +102,7 @@ def analyze_with_gemini(papers):
         return papers
 
     print(f"Analyzing {len(papers)} papers with AI...")
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={GEMINI_API_KEY}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
     
     # Batch processing to stay well under rate limits
     batch_size = 5
