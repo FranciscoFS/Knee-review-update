@@ -20,6 +20,8 @@ permissions:
 jobs:
   update-feed:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -31,7 +33,6 @@ jobs:
           
       - name: Run AI update script
         env:
-          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           START_DATE: ${{ github.event.inputs.start_date }}
           END_DATE: ${{ github.event.inputs.end_date }}
