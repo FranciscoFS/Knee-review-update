@@ -2,15 +2,15 @@ const BASE_URL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
 
 // Target journals identified by user
 const TARGET_JOURNALS = [
-  '"American journal of sports medicine"[Journal]',
-  '"Knee surgery, sports traumatology, arthroscopy"[Journal]',
-  '"Journal of ISAKOS"[Journal]',
-  '"The Knee"[Journal]',
+  '"Am J Sports Med"[Journal]',
+  '"Knee Surg Sports Traumatol Arthrosc"[Journal]',
+  '"J ISAKOS"[Journal]',
+  '"Knee"[Journal]',
   '"Nature"[Journal]',
   '"Lancet"[Journal]',
-  '"The Journal of bone and joint surgery. American volume"[Journal]', // JBJS
-  '"Journal of bone and joint infection"[Journal]', // JBJI
-  '"Journal of the American Academy of Orthopaedic Surgeons"[Journal]' // JAOOS
+  '"J Bone Joint Surg Am"[Journal]',
+  '"J Bone Jt Infect"[Journal]',
+  '"J Am Acad Orthop Surg"[Journal]'
 ];
 
 // Broader query to catch papers that might not explicitly use the word "knee" in the title/abstract
