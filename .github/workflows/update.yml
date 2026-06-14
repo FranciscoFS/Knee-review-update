@@ -40,11 +40,9 @@ jobs:
           END_DATE: ${{ github.event.inputs.end_date }}
         run: python scripts/update_feed.py
         
-      - name: Commit and push changes
+      - name: Commit and push if changed
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add public/data/weekly_feed.json
-          # Only commit if there are changes
-          git diff --quiet && git diff --staged --quiet || git commit -m "chore: Update weekly feed via AI"
-          git push
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          git add public/data/
+          git diff --quiet && git diff --staged --quiet || (git commit -m "chore: Update weekly feed via AI" && git push)
