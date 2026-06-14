@@ -13,15 +13,15 @@ GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "").strip().strip('"').strip("
 PUBMED_BASE = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils'
 
 TARGET_JOURNALS = [
-    '"American journal of sports medicine"[Journal]',
-    '"Knee surgery, sports traumatology, arthroscopy"[Journal]',
-    '"Journal of ISAKOS"[Journal]',
-    '"The Knee"[Journal]',
+    '"Am J Sports Med"[Journal]',
+    '"Knee Surg Sports Traumatol Arthrosc"[Journal]',
+    '"J ISAKOS"[Journal]',
+    '"Knee"[Journal]',
     '"Nature"[Journal]',
     '"Lancet"[Journal]',
-    '"The Journal of bone and joint surgery. American volume"[Journal]',
-    '"Journal of bone and joint infection"[Journal]',
-    '"Journal of the American Academy of Orthopaedic Surgeons"[Journal]'
+    '"J Bone Joint Surg Am"[Journal]',
+    '"J Bone Jt Infect"[Journal]',
+    '"J Am Acad Orthop Surg"[Journal]'
 ]
 
 KNEE_SURGERY_QUERY = '("knee"[Title/Abstract] OR "anterior cruciate ligament"[Title/Abstract] OR "ACL"[Title/Abstract] OR "meniscus"[Title/Abstract] OR "meniscal"[Title/Abstract] OR "patellofemoral"[Title/Abstract] OR "patella"[Title/Abstract] OR "tibial"[Title/Abstract] OR "femoral"[Title/Abstract])'
