@@ -8,16 +8,6 @@ on:
       start_date:
         description: 'Start Date (YYYY/MM/DD). Leave blank for default 7 days.'
         required: false
-name: Weekly AI Feed Update
-
-on:
-  schedule:
-    - cron: '0 0 * * 0' # Runs at midnight every Sunday
-  workflow_dispatch: # Allows manual trigger from GitHub UI
-    inputs:
-      start_date:
-        description: 'Start Date (YYYY/MM/DD). Leave blank for default 7 days.'
-        required: false
         type: string
       end_date:
         description: 'End Date (YYYY/MM/DD). Leave blank for default 7 days.'
