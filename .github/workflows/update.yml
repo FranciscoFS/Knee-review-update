@@ -8,6 +8,16 @@ on:
       start_date:
         description: 'Start Date (YYYY/MM/DD). Leave blank for default 7 days.'
         required: false
+name: Weekly AI Feed Update
+
+on:
+  schedule:
+    - cron: '0 0 * * 0' # Runs at midnight every Sunday
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+    inputs:
+      start_date:
+        description: 'Start Date (YYYY/MM/DD). Leave blank for default 7 days.'
+        required: false
         type: string
       end_date:
         description: 'End Date (YYYY/MM/DD). Leave blank for default 7 days.'
@@ -16,6 +26,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 jobs:
   update-feed:
@@ -46,3 +58,7 @@ jobs:
           git config --global user.email 'action@github.com'
           git add public/data/
           git diff --quiet && git diff --staged --quiet || (git commit -m "chore: Update weekly feed via AI" && git push)
+
+  deploy:
+    needs: update-feed
+    uses: ./.github/workflows/deploy.yml
