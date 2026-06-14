@@ -1,1 +1,12 @@
-[{"date": "2026-06-14", "file": "feed_2026-06-14.json", "label": "Week of Jun 14, 2026"}, {"date": "2026-06-07", "file": "feed_2026-06-07.json", "label": "Week of Jun 07, 2026"}]
+[
+  {
+    "date": "2026-06-14",
+    "file": "feed_2026-06-14.json",
+    "label": "Week of Jun 14, 2026"
+  },
+  {
+    "date": "2026-06-07",
+    "file": "feed_2026-06-07.json",
+    "label": "Week of Jun 07, 2026"
+  }
+]
