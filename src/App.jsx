@@ -199,27 +199,7 @@ function App() {
         )}
       </header>
 
-      <form className="filters-card" onSubmit={handleSearch}>
-        <div className="filter-group">
-          <label htmlFor="startDate">Start Date</label>
-          <input 
-            type="date" 
-            id="startDate" 
-            value={startDate} 
-            onChange={e => setStartDate(e.target.value)} 
-            required 
-          />
-        </div>
-        <div className="filter-group">
-          <label htmlFor="endDate">End Date</label>
-          <input 
-            type="date" 
-            id="endDate" 
-            value={endDate} 
-            onChange={e => setEndDate(e.target.value)} 
-            required 
-          />
-        </div>
+      <div className="filters-card">
         <div className="filter-group">
           <label htmlFor="category">Category</label>
           <select 
@@ -247,25 +227,7 @@ function App() {
             <option value="date">Date (Newest)</option>
           </select>
         </div>
-        <button type="submit" className="btn" disabled={loading}>
-          {loading ? <RefreshCw className="spinner" size={20} /> : <Search size={20} />}
-          {loading ? 'Searching...' : 'Search'}
-        </button>
-        {!isAiFeed && (
-          <button 
-            type="button" 
-            className="btn btn-secondary" 
-            onClick={() => {
-              const defaultFile = feedHistory.length > 0 ? feedHistory[0].file : 'weekly_feed.json';
-              setSelectedFeedFile(defaultFile);
-              loadAiFeed(defaultFile);
-            }} 
-            disabled={loading}
-          >
-            <Sparkles size={20} /> Return to AI Feed
-          </button>
-        )}
-      </form>
+      </div>
 
       {loading && (
         <div className="loading-state">
