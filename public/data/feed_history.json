@@ -1,5 +1,10 @@
 [
   {
+    "date": "2026-11-08",
+    "file": "feed_2026-11-08.json",
+    "label": "Week of Nov 08, 2026"
+  },
+  {
     "date": "2026-11-01",
     "file": "feed_2026-11-01.json",
     "label": "Week of Nov 01, 2026"
